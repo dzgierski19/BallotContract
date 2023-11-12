@@ -1,8 +1,11 @@
 import { ethers } from "hardhat";
 import * as dotenv from "dotenv";
+// const envPath = "../.env";
+// dotenv.config({ path: envPath });
 dotenv.config();
 
 async function main() {
+  //Receiving parameters
   const proposals = process.argv.slice(2);
   if (!proposals || proposals.length < 1)
     throw new Error("Proposals not provided");
@@ -12,10 +15,9 @@ async function main() {
     console.log(`Proposal N. ${index + 1}: ${element}`);
   });
   //   Fallback provider
-  const provider = new ethers.JsonRpcProvider(
-    process.env.RPC_ENDPOINT_URL ?? ""
-  );
+  const provider = new ethers.JsonRpcProvider(process.env.RPC_ENDPOINT_URL);
   //   connecting to public blockchain
+  console.log(process.env.RPC_ENDPOINT_URL);
   const lastBlock = await provider.getBlock("latest");
   console.log(`Last block number: ${lastBlock?.number}`);
   const lastBlockTimestamp = lastBlock?.timestamp ?? 0;
@@ -23,6 +25,15 @@ async function main() {
   console.log(
     `Last block timestamp: ${lastBlockTimestamp} (${lastBlockDate.toLocaleDateString()} ${lastBlockDate.toLocaleTimeString()})`
   );
+  //   connecting wallet
+  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY ?? "", provider);
+  console.log(`Using address ${wallet.address}`);
+  const balanceBN = await provider.getBalance(wallet.address);
+  const balance = Number(ethers.formatUnits(balanceBN));
+  console.log(`Wallet balance ${balance} ETH`);
+  if (balance < 0.01) {
+    throw new Error("Not enough ether");
+  }
 }
 
 main().catch((error) => {
