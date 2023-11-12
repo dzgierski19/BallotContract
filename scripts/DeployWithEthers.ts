@@ -1,5 +1,7 @@
 import { ethers } from "hardhat";
+import { Ballot__factory } from "../typechain-types";
 import * as dotenv from "dotenv";
+
 // const envPath = "../.env";
 // dotenv.config({ path: envPath });
 dotenv.config();
@@ -33,6 +35,20 @@ async function main() {
   console.log(`Wallet balance ${balance} ETH`);
   if (balance < 0.01) {
     throw new Error("Not enough ether");
+  }
+
+  //   deploying the smart contract using Typechain
+
+  const ballotFactory = new Ballot__factory(wallet);
+  const ballotContract = await ballotFactory.deploy(
+    proposals.map(ethers.encodeBytes32String)
+  );
+  await ballotContract.waitForDeployment();
+  console.log(`Contract deployed to ${ballotContract.target}`);
+  for (let index = 0; index < proposals.length; index++) {
+    const proposal = await ballotContract.proposals(index);
+    const name = ethers.decodeBytes32String(proposal.name);
+    console.log({ index, name, proposal });
   }
 }
 
